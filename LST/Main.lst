@@ -1,0 +1,293 @@
+C51 COMPILER V9.00   MAIN                                                                  08/04/2016 14:12:05 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\HEX\Main.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Main.c BROWSE DEBUG OBJECTEXTEND CODE SYMBOLS PRINT(.\LST\Main.lst) TABS(2)
+                    - OBJECT(.\HEX\Main.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include "tick.h"
+   3          #include "ds18xx.h"
+   4          #include "lcm.h"
+   5          #include "cursorpos.h"
+   6          
+   7          void DisplayMenu(void);
+   8          unsigned char C2F(unsigned char);
+   9          
+  10          typedef enum enumOperatingMode
+  11          {
+  12            OP_StartConvertT, //溫度轉換
+  13            OP_ReadTemper,  //讀取溫度值
+  14            OP_End
+  15          }OperatingModeIndex;
+  16          
+  17          unsigned char OpMode;
+  18          unsigned int tSystemTick;
+  19          unsigned char CurrentTemperture;
+  20          
+  21          code unsigned char Str_NowTemperature[] = "Now Temperature";
+  22          code unsigned char Str_C[]  = "C";
+  23          code unsigned char Str_F[]  = "F";
+  24          
+  25          main()
+  26          {
+  27   1        InitTick(); //起始鐘控計時
+  28   1        LCD_Startup();  //起始 LCM
+  29   1        InitDS18XX(); //初始DS18XX溫度晶體
+  30   1        
+  31   1        CursorDisplay(0); //關閉游標顯示
+  32   1        ClearDisplay(); //清除LCD顯示
+  33   1        DisplayMenu();  //顯示作業時的畫面
+  34   1        
+  35   1        OpMode = OP_StartConvertT;
+  36   1        
+  37   1        while(1)
+  38   1        {
+  39   2          switch(OpMode)
+  40   2          {
+  41   3            case OP_StartConvertT:  //溫度轉換
+  42   3              StartConvertTemperature();    //開始溫度轉換程序
+  43   3              tSystemTick = GetSystemTick();  //讀取目前系統鐘控計時值
+  44   3              OpMode = OP_ReadTemper;     //下一步：讀取溫度值
+  45   3              break;
+  46   3              
+  47   3            case OP_ReadTemper:   //讀取溫度值
+  48   3              if((GetSystemTick() - tSystemTick) >= MS_300) //溫度轉換程序開始後,約300ms再讀取溫度值
+  49   3              { 
+  50   4                CurrentTemperture = ReadTemperature();    //讀取溫度值
+  51   4                DspLocDecByte(TEMPERATURE_CX,TEMPERATURE_CY,CurrentTemperture,2,ZERO_OFF); //顯示攝氏溫度值
+  52   4                DspLocDecByte(TEMPERATURE_FX,TEMPERATURE_FY,C2F(CurrentTemperture),3,ZERO_OFF); //顯示華氏溫度值
+  53   4                OpMode = OP_StartConvertT;  //下一步：溫度轉換
+  54   4              }
+C51 COMPILER V9.00   MAIN                                                                  08/04/2016 14:12:05 PAGE 2   
+
+  55   3              break;
+  56   3          }
+  57   2        }
+  58   1      }
+  59          
+  60          /*---------------------------------------------
+  61            攝氏轉華氏
+  62            轉換公式；F = 9/5 * C + 32
+  63          ---------------------------------------------*/
+  64          unsigned char C2F(unsigned char cval)
+  65          {
+  66   1        unsigned int fval;
+  67   1        fval = (unsigned int)cval * 9;  //值乘上9
+  68   1        fval /= 5;  //除以5
+  69   1        fval += 32; //加上32
+  70   1        return((unsigned char) fval); //傳回轉換值
+  71   1      }
+  72          
+  73          /*---------------------------------------------
+  74            顯示作業時的畫面
+  75          ---------------------------------------------*/
+  76          void DisplayMenu(void)
+  77          {
+  78   1        DspLocString(MENU_L0_X, MENU_L0_Y, &Str_NowTemperature);//顯示字串
+  79   1        DspLocChar(STR_C_X, STR_C_Y,SYM_DEGREE);  //顯示攝氏符號
+  80   1        DisplayChar('C');
+  81   1        DspLocChar(STR_F_X, STR_F_Y,SYM_DEGREE);  //顯示華氏符號
+  82   1        DisplayChar('F');
+  83   1        //DspLocString(STR_C_X, STR_C_Y, &Str_C);  //顯示攝氏符號
+  84   1        //DspLocString(STR_F_X, STR_F_Y, &Str_F);  //顯示華氏符號
+  85   1      }
+C51 COMPILER V9.00   MAIN                                                                  08/04/2016 14:12:05 PAGE 3   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION main (BEGIN)
+                                           ; SOURCE LINE # 25
+                                           ; SOURCE LINE # 26
+                                           ; SOURCE LINE # 27
+0000 120000      E     LCALL   InitTick
+                                           ; SOURCE LINE # 28
+0003 120000      E     LCALL   LCD_Startup
+                                           ; SOURCE LINE # 29
+0006 120000      E     LCALL   InitDS18XX
+                                           ; SOURCE LINE # 31
+0009 C200        E     CLR     ?CursorDisplay?BIT
+000B 120000      E     LCALL   CursorDisplay
+                                           ; SOURCE LINE # 32
+000E 120000      E     LCALL   ClearDisplay
+                                           ; SOURCE LINE # 33
+0011 120000      R     LCALL   DisplayMenu
+                                           ; SOURCE LINE # 35
+0014 E4                CLR     A
+0015 F500        R     MOV     OpMode,A
+0017         ?C0001:
+                                           ; SOURCE LINE # 37
+                                           ; SOURCE LINE # 38
+                                           ; SOURCE LINE # 39
+0017 E500        R     MOV     A,OpMode
+0019 14                DEC     A
+001A 6012              JZ      ?C0005
+001C 04                INC     A
+001D 70F8              JNZ     ?C0001
+                                           ; SOURCE LINE # 40
+                                           ; SOURCE LINE # 41
+001F         ?C0004:
+                                           ; SOURCE LINE # 42
+001F 120000      E     LCALL   StartConvertTemperature
+                                           ; SOURCE LINE # 43
+0022 120000      E     LCALL   GetSystemTick
+0025 8E00        R     MOV     tSystemTick,R6
+0027 8F00        R     MOV     tSystemTick+01H,R7
+                                           ; SOURCE LINE # 44
+0029 750001      R     MOV     OpMode,#01H
+                                           ; SOURCE LINE # 45
+002C 80E9              SJMP    ?C0001
+                                           ; SOURCE LINE # 47
+002E         ?C0005:
+                                           ; SOURCE LINE # 48
+002E 120000      E     LCALL   GetSystemTick
+0031 C3                CLR     C
+0032 EF                MOV     A,R7
+0033 9500        R     SUBB    A,tSystemTick+01H
+0035 FF                MOV     R7,A
+0036 EE                MOV     A,R6
+0037 9500        R     SUBB    A,tSystemTick
+0039 FE                MOV     R6,A
+003A C3                CLR     C
+003B EF                MOV     A,R7
+003C 9406              SUBB    A,#06H
+003E EE                MOV     A,R6
+003F 9400              SUBB    A,#00H
+0041 40D4              JC      ?C0001
+                                           ; SOURCE LINE # 49
+C51 COMPILER V9.00   MAIN                                                                  08/04/2016 14:12:05 PAGE 4   
+
+                                           ; SOURCE LINE # 50
+0043 120000      E     LCALL   ReadTemperature
+0046 8F00        R     MOV     CurrentTemperture,R7
+                                           ; SOURCE LINE # 51
+0048 750002      E     MOV     ?_DspLocDecByte?BYTE+03H,#02H
+004B C200        E     CLR     ?_DspLocDecByte?BIT
+004D AB00        R     MOV     R3,CurrentTemperture
+004F 7D01              MOV     R5,#01H
+0051 E4                CLR     A
+0052 FF                MOV     R7,A
+0053 120000      E     LCALL   _DspLocDecByte
+                                           ; SOURCE LINE # 52
+0056 AF00        R     MOV     R7,CurrentTemperture
+0058 120000      R     LCALL   _C2F
+005B AB07              MOV     R3,AR7
+005D 750003      E     MOV     ?_DspLocDecByte?BYTE+03H,#03H
+0060 C200        E     CLR     ?_DspLocDecByte?BIT
+0062 7D01              MOV     R5,#01H
+0064 7F0B              MOV     R7,#0BH
+0066 120000      E     LCALL   _DspLocDecByte
+                                           ; SOURCE LINE # 53
+0069 E4                CLR     A
+006A F500        R     MOV     OpMode,A
+                                           ; SOURCE LINE # 54
+                                           ; SOURCE LINE # 55
+006C 80A9              SJMP    ?C0001
+             ; FUNCTION main (END)
+
+             ; FUNCTION _C2F (BEGIN)
+                                           ; SOURCE LINE # 64
+;---- Variable 'cval' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 65
+                                           ; SOURCE LINE # 67
+0000 7E00              MOV     R6,#00H
+0002 7C00              MOV     R4,#00H
+0004 7D09              MOV     R5,#09H
+0006 120000      E     LCALL   ?C?IMUL
+;---- Variable 'fval' assigned to Register 'R6/R7' ----
+                                           ; SOURCE LINE # 68
+0009 7D05              MOV     R5,#05H
+000B 120000      E     LCALL   ?C?UIDIV
+                                           ; SOURCE LINE # 69
+000E 7420              MOV     A,#020H
+0010 2F                ADD     A,R7
+0011 FF                MOV     R7,A
+                                           ; SOURCE LINE # 70
+                                           ; SOURCE LINE # 71
+0012         ?C0008:
+0012 22                RET     
+             ; FUNCTION _C2F (END)
+
+             ; FUNCTION DisplayMenu (BEGIN)
+                                           ; SOURCE LINE # 76
+                                           ; SOURCE LINE # 77
+                                           ; SOURCE LINE # 78
+0000 7BFF              MOV     R3,#0FFH
+0002 7A00        R     MOV     R2,#HIGH Str_NowTemperature
+0004 7900        R     MOV     R1,#LOW Str_NowTemperature
+0006 E4                CLR     A
+0007 FD                MOV     R5,A
+0008 FF                MOV     R7,A
+0009 120000      E     LCALL   _DspLocString
+C51 COMPILER V9.00   MAIN                                                                  08/04/2016 14:12:05 PAGE 5   
+
+                                           ; SOURCE LINE # 79
+000C 7BDF              MOV     R3,#0DFH
+000E 7D01              MOV     R5,#01H
+0010 7F02              MOV     R7,#02H
+0012 120000      E     LCALL   _DspLocChar
+                                           ; SOURCE LINE # 80
+0015 7F43              MOV     R7,#043H
+0017 120000      E     LCALL   _DisplayChar
+                                           ; SOURCE LINE # 81
+001A 7BDF              MOV     R3,#0DFH
+001C 7D01              MOV     R5,#01H
+001E 7F0E              MOV     R7,#0EH
+0020 120000      E     LCALL   _DspLocChar
+                                           ; SOURCE LINE # 82
+0023 7F46              MOV     R7,#046H
+0025 020000      E     LJMP    _DisplayChar
+             ; FUNCTION DisplayMenu (END)
+
+C51 COMPILER V9.00   MAIN                                                                  08/04/2016 14:12:05 PAGE 6   
+
+NAME                                    CLASS   MSPACE  TYPE    OFFSET  SIZE
+====                                    =====   ======  ====    ======  ====
+
+
+tSystemTick. . . . . . . . . . . . . .  PUBLIC   DATA   U_INT    0000H  2
+StartConvertTemperature. . . . . . . .  EXTERN   CODE   PROC     -----  -----
+ReadTemperature. . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+OP_End . . . . . . . . . . . . . . . .  E_CONST  -----  U_CHAR   -----  1
+CurrentTemperture. . . . . . . . . . .  PUBLIC   DATA   U_CHAR   0002H  1
+InitTick . . . . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+main . . . . . . . . . . . . . . . . .  PUBLIC   CODE   PROC     0000H  -----
+LCD_Startup. . . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+OperatingModeIndex . . . . . . . . . .  TYPEDEF  -----  U_CHAR   -----  1
+GetSystemTick. . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+_C2F . . . . . . . . . . . . . . . . .  PUBLIC   CODE   PROC     0000H  -----
+  cval . . . . . . . . . . . . . . . .  * REG *  DATA   U_CHAR   0007H  1
+  fval . . . . . . . . . . . . . . . .  * REG *  DATA   U_INT    0006H  2
+_DspLocString. . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+ClearDisplay . . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+OpMode . . . . . . . . . . . . . . . .  PUBLIC   DATA   U_CHAR   0003H  1
+_DspLocChar. . . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+InitDS18XX . . . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+OP_StartConvertT . . . . . . . . . . .  E_CONST  -----  U_CHAR   -----  1
+_DisplayChar . . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+Str_C. . . . . . . . . . . . . . . . .  PUBLIC   CODE   ARRAY    0010H  2
+CursorDisplay. . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+Str_F. . . . . . . . . . . . . . . . .  PUBLIC   CODE   ARRAY    0012H  2
+Str_NowTemperature . . . . . . . . . .  PUBLIC   CODE   ARRAY    0000H  16
+_DspLocDecByte . . . . . . . . . . . .  EXTERN   CODE   PROC     -----  -----
+enumOperatingMode. . . . . . . . . . .  * TAG *  -----  ENUM     -----  -----
+OP_ReadTemper. . . . . . . . . . . . .  E_CONST  -----  U_CHAR   -----  1
+DisplayMenu. . . . . . . . . . . . . .  PUBLIC   CODE   PROC     0000H  -----
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    169    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

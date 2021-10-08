@@ -1,0 +1,186 @@
+C51 COMPILER V9.00   TICK                                                                  08/04/2016 14:12:05 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE TICK
+OBJECT MODULE PLACED IN .\HEX\Tick.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Tick.c BROWSE DEBUG OBJECTEXTEND CODE SYMBOLS PRINT(.\LST\Tick.lst) TABS(2)
+                    - OBJECT(.\HEX\Tick.obj)
+
+line level    source
+
+   1          /*--------------------------------------------------
+   2            系統鐘控計時中斷服務常式
+   3          --------------------------------------------------*/
+   4          #include <reg51.h>
+   5          #include "system.h"
+   6          #include "tick.h"
+   7          
+   8          #define TICK_INTERRUPT_PERIOD_CNT (((XTAL*TICK_INTERRUPT_PERIOD_MS)/1000)/12)
+   9            /*********************************************************
+  10            MICRO_ADJUST = 計時器中斷時間準確度微調，如中斷誤差，單位=指令時間,
+  11                           值減少則調慢(中斷週期時間調長)
+  12            *********************************************************/
+  13          #define MICRO_ADJUST  22    //鐘控計時準確度微調
+  14          #define TICK_PERIOD ((65536-TICK_INTERRUPT_PERIOD_CNT)+MICRO_ADJUST)
+  15          
+  16          unsigned int SystemTick;  //系統計時值
+  17          
+  18          /*========================================================
+  19            讀取系統計時時間
+  20          ========================================================*/
+  21          unsigned int GetSystemTick(void)
+  22          {
+  23   1        volatile unsigned int StableTick; //檢查計時值穩定
+  24   1        do
+  25   1        {
+  26   2          StableTick = SystemTick;  //讀取鐘控計時值
+  27   2        }while(StableTick != SystemTick); //若無改變則跳出
+  28   1        return(StableTick); /* 傳回系統鐘控值 */
+  29   1      }
+  30          
+  31          /*------------------------------------------
+  32            初始系統鐘控計時器中斷設定參數
+  33          ------------------------------------------*/
+  34          void InitTick(void)
+  35          {
+  36   1        SystemTick = 0; //清除系統鐘控計時值
+  37   1        TMOD &= 0xf0; /* 清除計時模式控制位元 */
+  38   1        TMOD |= 0x1;    /* 設定 16 位元計時 */
+  39   1        TR0 = 0;  /* 停止計時 */
+  40   1        TF0 = 0;  /* 清除計時溢位旗號 */
+  41   1        TH0 = TICK_PERIOD >> 8; /* 載入系統鐘控計時值高位元組 */
+  42   1        TL0 = (unsigned char)TICK_PERIOD; /* 載入系統鐘控計時值低位元組 */
+  43   1        PT0 = 1;  //系統鐘控中斷為最高優先權
+  44   1        TR0 = 1;  /* 開始計時 */
+  45   1        ET0 = 1;  /* 致能計時器0中斷 */
+  46   1          EA = 1;     /* 致能中斷開關 */
+  47   1      }
+  48          
+  49          /*------------------------------------------
+  50            系統鐘控計時中斷服務常式
+  51          ------------------------------------------*/
+  52          void timer0 (void) interrupt 1 using 1
+  53          {
+  54   1        TR0 = 0;  //停止計時
+C51 COMPILER V9.00   TICK                                                                  08/04/2016 14:12:05 PAGE 2   
+
+  55   1        TH0 = TICK_PERIOD >> 8; //重載高位元組
+  56   1        TL0 = (unsigned char)TICK_PERIOD; //重載低位元組
+  57   1        TR0 = 1;  //開始計時
+  58   1        
+  59   1        SystemTick++; //遞增系統計時時間
+  60   1      }
+C51 COMPILER V9.00   TICK                                                                  08/04/2016 14:12:05 PAGE 3   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION GetSystemTick (BEGIN)
+                                           ; SOURCE LINE # 21
+                                           ; SOURCE LINE # 22
+0000         ?C0003:
+                                           ; SOURCE LINE # 25
+                                           ; SOURCE LINE # 26
+0000 850000      R     MOV     StableTick,SystemTick
+0003 850000      R     MOV     StableTick+01H,SystemTick+01H
+                                           ; SOURCE LINE # 27
+0006 E500        R     MOV     A,StableTick+01H
+0008 B500F5      R     CJNE    A,SystemTick+01H,?C0003
+000B E500        R     MOV     A,StableTick
+000D B500F0      R     CJNE    A,SystemTick,?C0003
+                                           ; SOURCE LINE # 28
+0010 AE00        R     MOV     R6,StableTick
+0012 AF00        R     MOV     R7,StableTick+01H
+                                           ; SOURCE LINE # 29
+0014         ?C0004:
+0014 22                RET     
+             ; FUNCTION GetSystemTick (END)
+
+             ; FUNCTION InitTick (BEGIN)
+                                           ; SOURCE LINE # 34
+                                           ; SOURCE LINE # 35
+                                           ; SOURCE LINE # 36
+0000 E4                CLR     A
+0001 F500        R     MOV     SystemTick,A
+0003 F500        R     MOV     SystemTick+01H,A
+                                           ; SOURCE LINE # 37
+0005 5389F0            ANL     TMOD,#0F0H
+                                           ; SOURCE LINE # 38
+0008 438901            ORL     TMOD,#01H
+                                           ; SOURCE LINE # 39
+000B C28C              CLR     TR0
+                                           ; SOURCE LINE # 40
+000D C28D              CLR     TF0
+                                           ; SOURCE LINE # 41
+000F 758C3C            MOV     TH0,#03CH
+                                           ; SOURCE LINE # 42
+0012 758AC6            MOV     TL0,#0C6H
+                                           ; SOURCE LINE # 43
+0015 D2B9              SETB    PT0
+                                           ; SOURCE LINE # 44
+0017 D28C              SETB    TR0
+                                           ; SOURCE LINE # 45
+0019 D2A9              SETB    ET0
+                                           ; SOURCE LINE # 46
+001B D2AF              SETB    EA
+                                           ; SOURCE LINE # 47
+001D 22                RET     
+             ; FUNCTION InitTick (END)
+
+             ; FUNCTION timer0 (BEGIN)
+0000 C0E0              PUSH    ACC
+                                           ; SOURCE LINE # 52
+                                           ; SOURCE LINE # 54
+0002 C28C              CLR     TR0
+                                           ; SOURCE LINE # 55
+0004 758C3C            MOV     TH0,#03CH
+C51 COMPILER V9.00   TICK                                                                  08/04/2016 14:12:05 PAGE 4   
+
+                                           ; SOURCE LINE # 56
+0007 758AC6            MOV     TL0,#0C6H
+                                           ; SOURCE LINE # 57
+000A D28C              SETB    TR0
+                                           ; SOURCE LINE # 59
+000C 0500        R     INC     SystemTick+01H
+000E E500        R     MOV     A,SystemTick+01H
+0010 7002              JNZ     ?C0008
+0012 0500        R     INC     SystemTick
+0014         ?C0008:
+                                           ; SOURCE LINE # 60
+0014 D0E0              POP     ACC
+0016 32                RETI    
+             ; FUNCTION timer0 (END)
+
+C51 COMPILER V9.00   TICK                                                                  08/04/2016 14:12:05 PAGE 5   
+
+NAME                                    CLASS   MSPACE  TYPE    OFFSET  SIZE
+====                                    =====   ======  ====    ======  ====
+
+
+EA . . . . . . . . . . . . . . . . . .  ABSBIT   -----  BIT      00AFH  1
+SystemTick . . . . . . . . . . . . . .  PUBLIC   DATA   U_INT    0000H  2
+InitTick . . . . . . . . . . . . . . .  PUBLIC   CODE   PROC     0000H  -----
+TMOD . . . . . . . . . . . . . . . . .  SFR      DATA   U_CHAR   0089H  1
+GetSystemTick. . . . . . . . . . . . .  PUBLIC   CODE   PROC     0000H  -----
+  StableTick . . . . . . . . . . . . .  AUTO     DATA   U_INT    0000H  2
+ET0. . . . . . . . . . . . . . . . . .  ABSBIT   -----  BIT      00A9H  1
+TF0. . . . . . . . . . . . . . . . . .  ABSBIT   -----  BIT      008DH  1
+TH0. . . . . . . . . . . . . . . . . .  SFR      DATA   U_CHAR   008CH  1
+TL0. . . . . . . . . . . . . . . . . .  SFR      DATA   U_CHAR   008AH  1
+timer0 . . . . . . . . . . . . . . . .  PUBLIC   CODE   PROC     0000H  -----
+PT0. . . . . . . . . . . . . . . . . .  ABSBIT   -----  BIT      00B9H  1
+TR0. . . . . . . . . . . . . . . . . .  ABSBIT   -----  BIT      008CH  1
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     74    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

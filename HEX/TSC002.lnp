@@ -1,0 +1,6 @@
+".\HEX\Tick.obj",
+".\HEX\Lcm.obj",
+".\HEX\Main.obj",
+".\HEX\DS18XX.obj" 
+TO ".\HEX\TSC002" 
+PRINT(".\LST\TSC002.m51")
